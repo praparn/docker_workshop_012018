@@ -1,0 +1,136 @@
+For this workshop. We need you to deploy NGINX for load balance and reverse proxy
+================================================================================
+Part1: Reverse Proxy by DNS
+================================================================================
+1. Pull image nginx with command: 		"docker image pull labdocker/nginx:labnetwork"
+2. Pull image nodejs (web1) with command:	"docker image pull labdocker/alpineweb:web1"
+3. Pull image nodejs (web2) with command:	"docker image pull labdocker/alpineweb:web2"
+4. Create Public Network with command:
+
+	docker network create --driver bridge \
+	--subnet=192.168.100.0/24 --ip-range=192.168.100.128/25 \
+	--gateway=192.168.100.5 --opt="com.docker.network.mtu"="1500" webpublic
+
+	docker network create --driver bridge \
+	--subnet=192.168.101.0/24 --ip-range=192.168.101.128/25 \
+	--gateway=192.168.101.5 --opt="com.docker.network.mtu"="9000" webinternal
+
+5. Run container web1 & web2 with command:
+
+	docker container run -dt --name web1 --net webinternal \
+	--net-alias web1 labdocker/alpineweb:web1 node hello.js
+
+	docker container run -dt --name web2 --net webinternal \
+	--net-alias web2 labdocker/alpineweb:web2 node hello.js
+
+6. Run container nginx and attach network 
+
+	docker container run -dt --name nginx --net webinternal \
+	 -p 80:8080 labdocker/nginx:labnetwork
+
+	docker network connect webpublic nginx
+
+7. Open url: http://<ip address of docker-machine>:80/nodejs
+
+8. Shell to nginx and test curl to nodejs with command below:
+	docker container exec -it nginx sh
+	curl http://web1:3000
+	curl http://web2:3000
+
+9. Clean up container with command:
+	docker container stop web1 web2 nginx
+	docker container rm web1 web2 nginx
+	docker network rm webpublic webinternal
+
+================================================================================
+Part2: Reverse Proxy by DNS with MACVLAN
+================================================================================
+1. Pull image nginx with command: 		
+	"docker image pull labdocker/nginx:labnetwork"
+
+2. Install TCPDUMP on labdocker by command:
+	tce-load -wi netfilter-4.8.17-tinycore64.tcz
+	sudo cp -R /tmp/tce/optional/netfilter-4.8.17-tinycore64.tcz.md5.txt /tmp/tce/optional/netfilter-4.4.111-boot2docker.tcz.md5.txt
+	sudo cp -R /tmp/tce/optional/netfilter-4.8.17-tinycore64.tcz /tmp/tce/optional/netfilter-4.4.111-boot2docker.tcz
+	sudo cp -R /tmp/tcloop/netfilter-4.8.17-tinycore64/* /tmp/tcloop/netfilter-4.4.111-boot2docker/
+	tce-load -wi tcpdump
+
+3. Check and Locate Network Card by command:
+	ifconfig / ip addr
+
+	Example: dockertoolbox (labdocker: eth1): Gateway: 192.168.99.1
+	----------------------------------------------------------------------------------------
+	docker@labdocker:~$ ip addr
+	----------------------------------------------------------------------------------------
+		1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+ 		   link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    		inet 127.0.0.1/8 scope host lo
+       		valid_lft forever preferred_lft forever
+    		inet6 ::1/128 scope host 
+       		valid_lft forever preferred_lft forever
+		2: dummy0: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    		link/ether 2a:85:11:8b:fd:43 brd ff:ff:ff:ff:ff:ff
+		3: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    		link/ether 08:00:27:b8:5f:44 brd ff:ff:ff:ff:ff:ff
+    		inet 10.0.2.15/24 brd 10.0.2.255 scope global eth0
+       		valid_lft forever preferred_lft forever
+    		inet6 fe80::a00:27ff:feb8:5f44/64 scope link 
+       		valid_lft forever preferred_lft forever
+		4: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    		link/ether 08:00:27:70:9c:8c brd ff:ff:ff:ff:ff:ff
+    		inet 192.168.99.100/24 brd 192.168.99.255 scope global eth1
+       		valid_lft forever preferred_lft forever
+    		inet6 fe80::a00:27ff:fe70:9c8c/64 scope link 
+       		valid_lft forever preferred_lft forever
+		5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    		link/ether 02:42:c4:90:24:b8 brd ff:ff:ff:ff:ff:ff
+    		inet 172.17.0.1/16 scope global docker0
+       		valid_lft forever preferred_lft forever	
+
+	---------------------------------------------------------------------------------------------
+
+2. Create Network for MACVLAN by command: (This example: will extract 192.168.99.193 - 192.168.99.206 for macvlan)
+	docker network create -d macvlan  \
+	--subnet=192.168.99.0/24  \
+	--ip-range=192.168.99.192/28 \
+	--gateway=192.168.99.1  \
+    -o parent=eth1 macvlanlab
+
+3. Run container for web1, web2 and nginx by command:
+	docker container run -dt --name web1 --net macvlanlab --ip 192.168.99.193 \
+	--net-alias web1  labdocker/alpineweb:web1 node hello.js
+	
+	docker container run -dt --name web2 --net macvlanlab --ip 192.168.99.194 \
+	--net-alias web2 labdocker/alpineweb:web2 node hello.js
+
+	docker container run -dt --name nginx --net macvlanlab --ip 192.168.99.195 \
+	--net-alias nginx labdocker/nginx:labnetwork
+
+4. On virtualbox: Set Property of Network Card for promiscuous mode (Reference: Manual_DockerToolbox_ChangeNetworkCard.pdf) 
+and configure nic card for promiscuous mode via command:
+	sudo ip link set dev eth1 promisc on
+
+5. Monitor traffic by tcpdump command:
+	sudo tcpdump -n -i eth1
+
+6. Test internal container connection by command:
+	docker container exec -it nginx curl http://web1:3000
+	docker container exec -it nginx curl http://web2:3000
+	docker container exec -it nginx ping web1
+	docker container exec -it nginx ping web2
+
+7. Test connect from outside by command: (Operate on Your notebook)
+	ping 192.168.99.193
+	ping 192.168.99.194
+	ping 192.168.99.195
+
+8. Test open url for access by command:
+	http://192.168.99.195:8080/					==> via NGINX
+	http://192.168.99.195:8080/nodejs			==> via NGINX
+	http://192.168.99.193:3000/					==> Native NODEJS1
+	http://192.168.99.194:3000/					==> Native NODEJS2
+
+9. Clean Up Lab by command:
+	docker container stop nginx web1 web2
+	docker container rm nginx web1 web2
+	docker network rm macvlanlab

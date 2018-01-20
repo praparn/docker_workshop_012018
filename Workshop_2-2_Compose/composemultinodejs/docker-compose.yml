@@ -1,0 +1,77 @@
+version: '3.4'
+services:
+  nginx:
+    build: 
+      context: ./nginx
+      dockerfile: dockerfile          # optional for specific dockerfile
+      cache_from:
+        - alpine:latest
+    container_name: nginx
+    depends_on:
+      - web1
+      - web2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]  # option for health check and send curl for check http://localhost:3000
+      interval: 30s                                         # interval health check
+      timeout: 10s                                          # timeout for check
+      retries: 3                                            # maximum retries
+      start_period: 30s                                     # start period <news on 3.4>
+    networks:
+      webpublic:
+        aliases:
+        - nginx
+      webinternal:
+        aliases:
+        - nginx
+    ports:
+      - "80:8080"
+
+  web1:
+    build:
+      context: ./web1
+      dockerfile: dockerfile          # optional for specific dockerfile
+      cache_from:
+        - labdocker/alpineweb:latest
+    container_name: web1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]  # option for health check and send curl for check http://localhost:3000
+      interval: 30s                                         # interval health check
+      timeout: 10s                                          # timeout for check
+      retries: 3                                            # maximum retries
+      start_period: 30s                                     # start period <news on 3.4>
+    networks:
+      webinternal:
+        aliases:
+        - web1
+
+  web2:
+    build:
+      context: ./web2
+      dockerfile: dockerfile          # optional for specific dockerfile
+      cache_from:
+        - labdocker/alpineweb:latest
+    container_name: web2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]  # option for health check and send curl for check http://localhost:3000
+      interval: 30s                                         # interval health check
+      timeout: 10s                                          # timeout for check
+      retries: 3                                            # maximum retries
+      start_period: 30s                                     # start period <news on 3.4>
+    networks:
+      webinternal:
+        aliases:
+        - web2
+
+networks:
+    webpublic:
+      driver: bridge
+      ipam:
+        driver: default
+        config:
+        - subnet: 192.168.100.0/24
+    webinternal:
+      driver: bridge
+      ipam:
+        driver: default
+        config:
+        - subnet: 192.168.101.0/24

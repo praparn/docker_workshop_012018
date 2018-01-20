@@ -1,0 +1,7 @@
+1. access url: http://hub.docker.com and register
+2. create repository name alpineweb
+3. Tag image to your account name: "docker image tag labdocker/alpineweb:latest <account>/alpineweb:latest"
+4. Login to hub.docker.com via step below
+	4.1 docker login -u <username>
+	4.2 docker image push <account>/alpineweb:latest
+	4.3 docker logout

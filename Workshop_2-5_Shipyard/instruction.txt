@@ -1,0 +1,18 @@
+For this workshop. We will demonstration how to start shipyard server on labdocker
+
+1. Install shipyard with command:
+	docker image pull swarm:latest
+	docker image pull alpine:latest
+	docker image pull rethinkdb:latest
+	docker image pull microbox/etcd:latest
+	docker image pull shipyard/docker-proxy:latest
+	docker image pull shipyard/shipyard:latest
+
+	sudo curl -sSL https://shipyard-project.com/deploy | sh -s
+
+2. After finish shipyard will display ip address and password to access (example):
+
+	Shipyard available at http://x.x.x.x:8080
+	Username: admin Password: shipyard
+
+3. Access via web form and start use

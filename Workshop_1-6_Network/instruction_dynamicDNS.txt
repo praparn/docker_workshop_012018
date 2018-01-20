@@ -1,0 +1,75 @@
+For this workshop. We need you to demo dynamic dns with option --net-alias="xxxx"
+
+1. Run container web1 & web2 with connect network web internal
+
+	docker network create --driver bridge \
+	--subnet=192.168.100.0/24 --ip-range=192.168.100.128/25 \
+	--gateway=192.168.100.5 --opt="com.docker.network.mtu"="1500" webpublic
+
+	docker network create --driver bridge \
+	--subnet=192.168.101.0/24 --ip-range=192.168.101.128/25 \
+	--gateway=192.168.101.5 --opt="com.docker.network.mtu"="9000" webinternal
+
+	docker container run -dt --name web1 --net webinternal \
+	--net-alias web labdocker/alpineweb:web1 node hello.js
+
+	docker container run -dt --name web2 --net webinternal \
+	--net-alias web labdocker/alpineweb:web2 node hello.js
+
+2. Run container nginx for check load balance
+
+docker container run -dt --name nginx --net webinternal \
+ -p 80:8080 labdocker/nginx:labdns
+
+docker network connect webpublic nginx --ip="192.168.100.130"
+
+3. Test with exec alpine container
+
+	docker container exec -it nginx sh
+	curl http://web:3000
+	curl http://web:3000
+
+4. Scale up backend container
+
+docker image pull labdocker/alpineweb:web3
+docker image pull labdocker/alpineweb:web4
+docker image pull labdocker/alpineweb:web5
+docker image pull labdocker/alpineweb:web6
+docker image pull labdocker/alpineweb:web7
+docker image pull labdocker/alpineweb:web8
+docker image pull labdocker/alpineweb:web9
+docker image pull labdocker/alpineweb:web10
+
+docker container run -dt --name web3 --net webinternal \
+--net-alias web labdocker/alpineweb:web3 node hello.js
+
+docker container run -dt --name web4 --net webinternal \
+--net-alias web labdocker/alpineweb:web4 node hello.js
+
+docker container run -dt --name web5 --net webinternal \
+--net-alias web labdocker/alpineweb:web5 node hello.js
+
+docker container run -dt --name web6 --net webinternal \
+--net-alias web labdocker/alpineweb:web6 node hello.js
+
+docker container run -dt --name web7 --net webinternal \
+--net-alias web labdocker/alpineweb:web7 node hello.js
+
+docker container run -dt --name web8 --net webinternal \
+--net-alias web labdocker/alpineweb:web8 node hello.js
+
+docker container run -dt --name web9 --net webinternal \
+--net-alias web labdocker/alpineweb:web9 node hello.js
+
+docker container run -dt --name web10 --net webinternal \
+--net-alias web labdocker/alpineweb:web10 node hello.js
+
+5. Restart nginx for restart:
+docker container restart nginx
+
+6. Test from webpage for check new refresh:
+
+7. Clean up container with command:
+docker container stop web1 web2 web3 web4 web5 web6 web7 web8 web9 web10 nginx
+docker container rm web1 web2 web3 web4 web5 web6 web7 web8 web9 web10 nginx
+docker network rm webpublic webinternal

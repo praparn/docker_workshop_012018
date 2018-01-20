@@ -1,0 +1,69 @@
+For this workshop. We will demonstration enhance security on docker
+
+Part1: Content Trust (Signed Image)
+-----------------------------------------------------------------------------------------------------------------
+1. Enable content trust feature by command:
+export DOCKER_CONTENT_TRUST=1
+
+2. Create repository "alpine" on hub.docker.com and Tag image with out sign image and push to hub.docker.com by command:
+docker image tag labdocker/alpine:latest <username>/alpine:unsign
+docker login -u <username>
+docker image push --disable-content-trust=true <username>/alpine:unsign
+docker logout
+
+3. Remove existing image and test pull image from hub.docker.com by command:
+docker image remove <username>/alpine:unsign
+docker image ls
+docker image pull <username>/alpine:unsign
+docker image ls
+
+4. Pull image with disable feature content trust by command:
+docker image pull --disable-content-trust=true <username>/alpine:unsign
+docker image ls
+
+5. Tag image sign image and push to hub.docker.com by command:
+docker tag labdocker/alpine:latest <username>/alpine:sign
+docker login -u <username>
+docker push <username>/alpine:sign
+	*Remark:
+		This step docker will ask for passphase for root key and repository, Please input as you prefer
+docker logout
+#####################################
+Example: Output
+#####################################
+The push refers to a repository [docker.io/praparn/alpine]
+6102f0d2ad33: Layer already exists 
+sign: digest: sha256:65242e8220a341cec40628caaea77eb4acd2fc252329aa853526fde15a4a1d85 size: 528
+Signing and pushing trust metadata
+You are about to create a new root signing key passphrase. This passphrase
+will be used to protect the most sensitive key in your signing system. Please
+choose a long, complex passphrase and be careful to keep the password and the
+key file itself secure and backed up. It is highly recommended that you use a
+password manager to generate the passphrase and keep it safe. There will be no
+way to recover this key. You can find the key in your config directory.
+Enter passphrase for new root key with ID ca6ab4b: <password>
+Repeat passphrase for new root key with ID ca6ab4b: <password>
+Enter passphrase for new repository key with ID 68d88cd (docker.io/praparn/alpine): <password>
+Repeat passphrase for new repository key with ID 68d88cd (docker.io/praparn/alpine): <password>
+Finished initializing "docker.io/praparn/alpine"
+Successfully signed "docker.io/praparn/alpine":sign
+#####################################
+Backup key:
+#####################################
+umask 077; tar -zcvf private_keys_backup.tar.gz ~/.docker/trust/private; umask 022
+
+#####################################
+Restore key:
+#####################################
+scp private_keys_backup.tar.gz docker@192.168.99.100:/home/docker/
+mkdir ~/.docker/trust/
+mkdir ~/.docker/trust/private
+umask 077; tar -xzvf private_keys_backup.tar.gz -C /home/docker; umask 022
+
+
+6. Remove existing image and test pull image from hub.docker.com by command:
+docker image remove <username>/alpine:sign
+docker image ls
+docker image pull <username>/alpine:sign
+docker image ls
+export DOCKER_CONTENT_TRUST=0

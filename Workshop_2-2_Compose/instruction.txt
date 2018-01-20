@@ -1,0 +1,51 @@
+For this workshop. We will install docker-compose tool on your docker-machine (labdocker) and demonstration for use compose tool
+
+=================
+Install docker-compose
+=================
+
+1. Get docker-compose from curl to /home/docker with command:
+	curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-`uname -s`-`uname -m` -o /home/docker/docker-compose
+
+
+2. Copy docker-compose to /usr/local/bin/docker-compose with command:
+
+	sudo cp /home/docker/docker-compose /usr/local/bin/docker-compose
+
+3. Change mode for allow execute with command: "sudo chmod +x /usr/local/bin/docker-compose"
+
+4. Check docker-compose readyness by command: "docker-compose --version"
+
+---------------------------------------------------------------------------------------------------
+Part1: COMPOSENODEJS
+---------------------------------------------------------------------------------------------------
+
+1. Copy folder "composenodejs" to "Share_DockerToolbox" and "cd /Share_DockerToolbox/composenodejs"
+
+2. Start docker-compose on path: /Share_DockerToolbox by command: "docker-compose up -d"
+
+3. Check container of stack by command: "docker-compose ps"
+
+4. Check avalaible image use for this stack by command: "docker-compose images"
+
+5. Open url: http://x.x.x.x:3000 for check result
+
+6. Stop docker-compose by command: "docker-compose stop"
+
+7. Remove docker-compose by command: "docker-compose down"
+
+---------------------------------------------------------------------------------------------------
+Part2: MULTIPLENODEJS
+---------------------------------------------------------------------------------------------------
+
+8. Copy folder "composemultinodejs" to "Share_DockerToolbox" and "cd /Share_DockerToolbox/composemultinodejs"
+
+9. Start docker-compose on path: /Share_DockerToolbox/composemultinodejs by command: "docker-compose up -d"
+
+10. Open url: http://x.x.x.x/nodejs for check result
+
+11. Stop docker-compose by command: "docker-compose stop"
+
+12. Remove docker-compose by command: "docker-compose down"
+
+13. Delete Folder "composemultinodejs","composenodejs" from /Share_DockerToolbox

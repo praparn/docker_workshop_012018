@@ -1,0 +1,63 @@
+1. Interactive NODEJS
+	1.1 run docker on interactive mode with command 
+
+	docker container run  -i -t --rm --name nodejs -p 3000:3000 \
+    labdocker/alpineweb:latest node hello.js
+
+	*Result: ==> Server running at http://0.0.0.0:3000/
+
+	1.2 open browser with url: http://<ip address of docker>:3000
+
+	1.3 open another session and press command: "docker container ps"
+	*Result: 
+	-----------------------------------------------------------------
+CONTAINER ID        IMAGE                        COMMAND             CREATED             STATUS              PORTS                    NAMES
+50d477721bde        labdocker/alpineweb:latest   "node hello.js"     4 minutes ago       Up 4 minutes        0.0.0.0:3000->3000/tcp   nodejs
+	-----------------------------------------------------------------
+
+	1.4 Terminate container with command: "docker container stop nodejs"
+	1.5 With option "--rm" so it will remove all container after finished work
+
+2. BOT LINE Notify:	
+
+	2.1 run docker on interactive mode with command:
+		docker container run -it --rm --name linebot -e TITLE="Line BOT (Bank of Thailand)" -e "TOKEN=<LINE TOKEN>" labdocker/linenotify:bot_v1
+
+		Ex:
+		docker container run --rm --name linebot -e "TITLE=Line BOT (Bank of Thailand)" -e "TOKEN=EIeqyillzkzpaCo1ROrebZTcGbIyzDZHpOjcdd0t6CX" labdocker/linenotify:bot_v1
+
+3. Detach NODEJS
+	3.1 run docker on detach mode with command
+
+	docker container run -d -t --name nodejs -p 3000:3000 \
+	labdocker/alpineweb:latest node hello.js
+
+	3.2 open browser with url: http://<ip address of docker>:3000
+
+	3.3 access shell to container with command: "docker container exec -i -t nodejs sh"
+
+	3.4 With command: "docker container ps"
+	*Result:
+	-----------------------------------------------------------------
+CONTAINER ID        IMAGE                        COMMAND             CREATED             STATUS              PORTS                    NAMES
+e0790d46c800        labdocker/alpineweb:latest   "node hello.js"     6 seconds ago       Up 5 seconds        0.0.0.0:3000->3000/tcp   nodejs
+	-----------------------------------------------------------------
+
+	3.5 Try stop/start docker with command: "docker container stop nodejs","docker container ps -a","docker container start nodejs"
+	3.6 After finished to stop container. We will remove docker container with command:
+	"docker container rm nodejs"
+
+4. Detach PYTHON
+
+	4.1 run docker on detach mode with command
+
+	docker container run  -d -t --name python -p 5000:5000 \
+ 	labdocker/cluster:webservicelite
+
+	4.2 open browser with url: http://<ip address of docker>:5000
+
+	4.3 access shell to container with command: "docker container exec -i -t python sh"
+
+	4.4 Stop container and cleanup by command:
+	docker container stop python
+	docker container rm python

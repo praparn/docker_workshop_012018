@@ -1,0 +1,16 @@
+version: "3.4"
+services:
+   web:
+      build: 
+        context: ./web
+        dockerfile: dockerfile          # optional for specific dockerfile
+      container_name: nodejs            # optional for specific container name
+      command: ["node","hello.js"]      # optional for override command on dockerfile
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:3000"]  # option for health check and send curl for check http://localhost:3000
+        interval: 30s                                         # interval health check
+        timeout: 10s                                          # timeout for check
+        retries: 3                                            # maximum retries
+        start_period: 30s                                     # start period <news on 3.4>
+      ports:
+        - 3000:3000

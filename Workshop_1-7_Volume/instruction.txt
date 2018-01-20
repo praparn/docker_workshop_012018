@@ -1,0 +1,114 @@
+For this workshop. We will demonstration about how to use volume on purpose of share storage and backup/restore
+***************************************************************************************
+Before Start Lab:
+	1.  Please kindly operate sharefile on Manual_DockerToolbox_Create_ShareFile.pdf
+	2.  Generate your line token https://notify-bot.line.me
+***************************************************************************************
+
+Part 1: Host Path Debug Program
+---------------------------------------------------------------------------------------------------------------
+1. Copy folder: "LINE_Notify" to "Share_DockerToolbox"
+2. Pull image of container for operate by command: "docker image pull labdocker/alpine:latest"
+3. Run container with mapping volume by command:
+	docker container run -dt --name linenotify --mount type=bind,source=/Share_DockerToolbox/LINE_Notify,target=/nodejs \
+	labdocker/alpine:latest sh
+
+4. Attach to container by command: docker container exec -it linenotify sh
+5. Update component by command:
+	apk update
+
+6. Install required module by command:
+	apk add nodejs curl vim bash
+
+7. Set environment for make code operate by command:
+	export NODE_VERSION=v4.3.0 
+	export NPM_VERSION=2.14.12
+	export TITLE=NODEJS_BOT_NOTIFY_PRAPARN										==> Replace with your name
+	export INTERVAL=10000 
+	export HEAP_HIGH=70 
+	export MEM_HIGH=30 
+	export SH_OS=Y 
+	export TOKEN=EIeqyillzkzpaCo1ROrebZTcGbIyzDZHpOjcdd0t6CX			==> Replace with your token
+
+8. Access to mapping volume and Test running LINENotify by command:
+	cd /nodejs
+	node index.js
+
+9. Open index.js on VSCode and Test change sometext:
+	Line 36: var titleMSG="\n"+TITLE+"("+pID+")" ==> var titleMSG="\n"+TITLE+"("+pID+" Edit LINENOTIFY)"
+
+10. Rerun LINENotify by command:
+	node index.js
+
+11. You can also swith some parameter for set warning as command:
+	export HEAP_HIGH=20 
+	export MEM_HIGH=20 
+	export SH_OS=N
+
+12. Rerun LINENotify by command:
+	node index.js
+
+13. Cleanup lab by command:
+	docker stop linenotify
+	docker rm linenotify
+
+
+Part 2: Container Volume 
+---------------------------------------------------------------------------------------------------------------
+
+1. Create volume container with command:
+
+	docker volume create --driver local datavol
+	docker volume ls
+
+2. Create web container (web1) by attach volume with command:
+
+	docker container run -dt --name web1 \
+	--mount source=datavol,target=/data \
+	labdocker/alpine sh
+
+3. Shell to container web1 and touch file on /data
+
+	docker container exec -it web1 sh
+	touch /data/test_web1
+
+4. Create web container (web2) by attach volume with command:
+
+	docker container run -dt --name web2 \
+	--mount source=datavol,target=/data \
+	labdocker/alpine sh
+
+5. Shell to container web2 and touch file on /data
+
+	docker container exec -it web2 sh
+	touch /data/test_web2
+
+6. Create backup for volume /data by run container with command:
+	docker container run --rm --mount source=datavol,target=/data \
+	--mount type=bind,source=$(pwd),target=/backup \
+	labdocker/ubuntu:latest tar cvf /backup/vol001.tar /data
+
+
+7. We will see backup file (vol001.tar) on /home/docker
+
+8. Shell to any container to delete file
+
+	docker container exec -it web1 sh
+	rm /data/*
+
+9. Restore backup for volume /data by run container with command:
+
+	docker container run --rm --mount source=datavol,target=/data \
+	--mount type=bind,source=$(pwd),target=/backup  \
+	labdocker/ubuntu:latest bash -c "cd /data && tar xvf /backup/vol001.tar --strip 1"
+
+10. Check on any container for check file
+
+	docker container exec -it web1 sh
+	ls -lh /data
+
+11. Cleanup lab
+
+	docker container stop web1 web2
+	docker container rm web1 web2
+	docker volume rm datavol

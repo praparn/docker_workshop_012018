@@ -1,0 +1,70 @@
+version: '3.3'
+services:
+
+  webcache:
+    build: 
+      context: ./
+      dockerfile: dockerfile_nginx
+      cache_from:
+        - alpine:latest
+    container_name: nginx
+    depends_on:
+      - webservice
+      - cachedb
+      - maindb
+    networks:
+      webpublic:
+        aliases:
+        - webcache
+      webinternal:
+        aliases:
+        - webcache
+    ports:
+      - "80:80"
+
+  webservice:
+    build:
+      context: ./
+      dockerfile: dockerfile_python
+      cache_from:
+        - labdocker/alpinepython:2.7-onbuild
+    container_name: webservice
+    depends_on:
+      - cachedb
+      - maindb
+    networks:
+      webinternal:
+        aliases:
+        - webservice
+
+  maindb:
+    image: labdocker/mysql:latest
+    container_name: maindb
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      webinternal:
+        aliases:
+        - maindb
+
+  cachedb:
+    image: labdocker/redis:latest
+    container_name: cachedb
+    networks:
+      webinternal:
+        aliases:
+        - cachedb
+
+networks:
+    webpublic:
+      driver: bridge
+      ipam:
+        driver: default
+        config:
+        - subnet: 192.168.100.0/24
+    webinternal:
+      driver: bridge
+      ipam:
+        driver: default
+        config:
+        - subnet: 192.168.101.0/24

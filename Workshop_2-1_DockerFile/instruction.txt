@@ -1,0 +1,110 @@
+For this workshop. We will create 1 dockerfile for install NODEJS & NPM on Pure "Alpine Linux" with Add 1 file (Hello.JS) to path /nodejs/hello.js
+
+Part 1: NODEJS/NGINX
+-----------------------------------------------------------------------------------------------------------
+NODEJS Container:
+
+1. Copy folder "nginx" and "nodejs" to "Share_DockerToolbox" and "cd /Share_DockerToolbox"
+
+2. Build docker image from command: "docker image build -t labdocker/node:1.0 /Share_DockerToolbox/nodejs"
+
+3. Test run docker image from command: "docker container run -dt --name NODEJS -p 3000:3000 labdocker/node:1.0"
+
+4. open url:"http://x.x.x.x:3000"
+
+
+NGINX Container:
+
+5. Check IP Address of docker-machine for configure in nginx.conf by command: "docker-machine ls"
+
+6. Open nginx.conf for configure IP Address on nginx.conf
+
+7. Build docker image from command: "docker image build -t labdocker/web:1.0 /Share_DockerToolbox/nginx"
+
+8. Test run docker image from command: "docker container run -dt --name NGINX -p 8080:8080 labdocker/web:1.0"
+
+9. open url:"http://x.x.x.x:8080"
+
+10. open url:"http://x.x.x.x:8080/nodejs"
+
+11. Clean Up Lab with command below
+
+	11.1 "docker container stop NGINX NODEJS"
+	11.2 "docker container rm NGINX NODEJS"
+	11.3 Delete folder /nginx,/nodejs from /Share_DockerToolbox
+
+
+Part 2: RESTFUL Python
+------------------------------------------------------------------------------------------------------------
+1. Copy folder "python_restfulset" to "Share_DockerToolbox" and "cd /Share_DockerToolbox/python_restfulset"
+
+2. Pull require image on lab by command:
+	docker image pull labdocker/mysql:latest
+	docker image pull labdocker/redis:latest
+
+2. Build module "webservice" by command: "docker image build -t labdocker/webservice:1.0 -f dockerfile_python /Share_DockerToolbox/python_restfulset/"
+
+3. Build module "webcache" by command: "docker image build -t labdocker/webcache:1.0 -f dockerfile_nginx /Share_DockerToolbox/python_restfulset/"
+
+4. Setup network/application stack by command:
+	(network)
+	docker network create --driver bridge \
+	--subnet=192.168.100.0/24 --ip-range=192.168.100.128/25 \
+	--gateway=192.168.100.5 --opt="com.docker.network.mtu"="1500" restful_switch
+
+	(maindb: mysql)
+	docker container run -dt --name maindb --net=restful_switch --network-alias=maindb \
+	-e MYSQL_ROOT_PASSWORD=password labdocker/mysql:latest
+
+	(cachedb: redis)
+	docker container run -dt --name cachedb --net=restful_switch --network-alias=cachedb \
+	labdocker/redis:latest
+
+	(webservice: pythonrestful)
+	docker container run -dt --name webservice --net=restful_switch --network-alias=webservice \
+	-p 5000:5000 labdocker/webservice:1.0
+
+	(webcache: nginx)
+	docker container run -dt --name webcache --net=restful_switch --network-alias=webcache \
+	-p 80:80 labdocker/webcache:1.0
+
+5. Set environment variable for test by command:
+	(client machine: MAC OS)
+    export Server_IP=<ip of docker host>
+    export Server_Port=80 (If need to direct test to python will change to 5000)
+
+6. Test restful service via curl by command:
+	(basic test web)
+	curl http://$Server_IP:$Server_Port/
+
+	(initial database)
+	curl http://$Server_IP:$Server_Port/init
+
+	(insert data by rest)
+	  curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "1", "user":"Praparn Luangphoonlap", "descripe":"Slave"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "2", "user":"Somchai Sunsukwan", "descripe":"Security Guard"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "3", "user":"Sanyachan Panrudee", "descripe":"House Keeping"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "4", "user":"Sakkan Yanyicharoen", "descripe":"Messenger"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "5", "user":"Chatchai Moungang", "descripe":"Programmer"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "6", "user":"Anusit Kannaphat", "descripe":"DevOps Manager"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "7", "user":"Meelarp Maisanuk", "descripe":"System Engineer"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "8", "user":"Pansa Bunsong", "descripe":"Secuirty Guard"}' http://$Server_IP:$Server_Port/users/insertuser
+      curl -i -H "Content-Type: application/json" -X POST -d '{"uid": "9", "user":"Wiphanee Wongsaisawan", "descripe":"Administrator"}' http://$Server_IP:$Server_Port/users/insertuser
+
+	(retrieve data)
+	  curl http://$Server_IP:$Server_Port/users/1
+      curl http://$Server_IP:$Server_Port/users/1 ==> Expect from Cache
+      curl http://$Server_IP:$Server_Port/users/4
+      curl http://$Server_IP:$Server_Port/users/4 ==> Expect from Cache
+
+	(delete data)
+	  curl http://$Server_IP:$Server_Port/users/removeuser/1
+      curl http://$Server_IP:$Server_Port/users/removeuser/2
+      curl http://$Server_IP:$Server_Port/users/removeuser/3
+      curl http://$Server_IP:$Server_Port/users/removeuser/4
+
+7. Clean Up lab by command:
+	docker container stop webcache webservice cachedb maindb
+	docker container rm webcache webservice cachedb maindb
+	docker network rm restful_switch
+	delete folder "python_restfulset" from /Share_DockerToolbox

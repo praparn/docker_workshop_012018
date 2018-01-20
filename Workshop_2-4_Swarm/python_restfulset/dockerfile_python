@@ -1,0 +1,5 @@
+FROM labdocker/alpinepython:2.7-onbuild
+MAINTAINER Praparn Lueangphoonlap (eva10409@gmail.com) 
+LABEL Description="NodeJS/NGINX Build Container" Version="1.0"
+EXPOSE 5000
+CMD [ "python", "main.py" ]

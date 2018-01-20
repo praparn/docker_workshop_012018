@@ -1,0 +1,17 @@
+Link for download:
+
+https://www.docker.com/products/docker-toolbox
+
+1.See PDF document for detail to install
+2.After finished then run below command for check docker-machine (Command prompt)
+	2.1 docker-machine --version 				==> check version of docker machine & readyness
+	2.2 docker-machine create --driver virtualbox –virtualbox-memory “1024” labdocker ==> create new docker-machine for lab
+	2.3 docker-machine ls 					==> check ip address of new docker-machine
+
+*Remark:default username/password for access docker-machine is docker/tcuser
+
+3.SSH to docker-machine (labdocker) 
+	3.1 docker-machine ssh labdocker 			==> default ssh via command prompt
+	3.2 access via putty(windows) to ip address
+	3.3 access via Shell (mac)
+		- Shell ==> New Remote Connection (Service: ssh)

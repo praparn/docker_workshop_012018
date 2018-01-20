@@ -1,0 +1,60 @@
+Before Operate this workshop. Please kindly configure multiple CPU (Default: 1) as PDF File
+
+1. Following PDF File to configure multiple CPU for "labdocker"
+
+2. Download and Run "cAdvisor"
+	2.1 pull image with command: docker image pull labdocker/cadvisor:latest
+	2.2 docker run with command:
+
+	docker container run \
+	--mount type=bind,source=/var/run,target=/var/run \
+	--mount type=bind,source=/sys,target=/sys,readonly \
+	--mount type=bind,source=/var/lib/docker,target=/var/lib/docker,readonly \
+	--publish=8080:8080 \
+	--detach=true \
+	--name=cadvisor \
+	labdocker/cadvisor:latest
+
+	2.3 open browser with url: http://<ip address of docker>:8080 and workthrough
+
+3. Download and Run "busybox"
+	3.1 pull image with command: docker image pull labdocker/busybox:latest
+	3.2 Scenario 1 (Single CPU: 70/30) by run command:
+
+	docker container run -d \
+	--name='Share_30' \
+	--cpuset-cpus=0 \
+	--cpu-shares=30 \
+	labdocker/busybox:latest md5sum /dev/urandom
+
+	docker container run -d \
+	--name='Share_70' \
+	--cpuset-cpus=0 \
+	--cpu-shares=70 \
+	labdocker/busybox:latest md5sum /dev/urandom
+
+		3.2.1 open cAdvisor and Check "docker container stats"
+		3.3.2 export TERM=xterm and "top"
+		3.2.3 check over all system disk space from command: "docker system df"
+		3.2.4 stop all container with command:"docker container stop Share_30 Share_70"
+		3.2.5 remove all container with command:"docker container rm Share_30 Share_70"
+
+	3.3 Scenario 2 (Two CPU: 70/30) by run command:
+
+	docker container run -d \
+	--name='Share_30' \
+	--cpuset-cpus=0 \
+	--cpu-shares=30 \
+	labdocker/busybox:latest md5sum /dev/urandom
+
+	docker container run -d \
+	--name='Share_70' \
+	--cpuset-cpus=1 \
+	--cpu-shares=70 \
+	labdocker/busybox:latest md5sum /dev/urandom
+
+		3.3.1 open cAdvisor and Check "docker container stats"
+		3.3.2 export TERM=xterm and "top"
+		3.3.3 stop all container with command:"docker container stop Share_30 Share_70 cadvisor"
+		3.3.4 remove all container with command:"docker container rm Share_30 Share_70 cadvisor"
+	

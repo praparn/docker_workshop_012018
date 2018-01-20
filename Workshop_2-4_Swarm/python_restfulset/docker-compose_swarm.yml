@@ -1,0 +1,95 @@
+version: '3.4'
+services:
+  webcache:
+    image: labdocker/cluster:webcache
+    container_name: nginx
+    deploy:
+      mode: global
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first                                 # order policy <news on 3.4>
+      restart_policy:
+        condition: on-failure
+        delay: 60s
+        max_attempts: 5
+        window: 120s
+      endpoint_mode: vip
+    depends_on:
+      - webservice
+      - cachedb
+      - maindb
+    networks:
+      webpublic:
+        aliases:
+        - webcache
+      webinternal:
+        aliases:
+        - webcache
+    ports:
+      - "80:80"
+
+  webservice:
+    image: labdocker/cluster:webservice
+    container_name: webservice
+    deploy:
+      mode: replicated
+      replicas: 6
+      update_config:
+        parallelism: 2
+        delay: 10s
+        order: start-first                                 # order policy <news on 3.4>
+      restart_policy:
+        condition: on-failure
+        delay: 60s
+        max_attempts: 3
+        window: 120s
+      endpoint_mode: vip
+    depends_on:
+      - cachedb
+      - maindb
+    networks:
+      webinternal:
+        aliases:
+        - webservice
+    ports:
+      - "5000:5000"
+
+  maindb:
+    image: labdocker/mysql:latest
+    container_name: maindb
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: vip
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      webinternal:
+        aliases:
+        - maindb
+
+  cachedb:
+    image: labdocker/redis:latest
+    container_name: cachedb
+    deploy:
+      mode: global
+      endpoint_mode: vip
+    networks:
+      webinternal:
+        aliases:
+        - cachedb
+
+networks:
+    webpublic:
+      driver: overlay
+      ipam:
+        driver: default
+        config:
+        - subnet: 192.168.100.0/24
+    webinternal:
+      driver: overlay
+      ipam:
+        driver: default
+        config:
+        - subnet: 192.168.101.0/24
