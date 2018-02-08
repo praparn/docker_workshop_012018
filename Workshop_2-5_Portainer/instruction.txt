@@ -1,0 +1,17 @@
+For this workshop. We will demonstration how to start portainer server on labdocker
+
+1. Install portainer with command:
+	docker volume create --driver local portainer_data
+	docker container run -d --name portainer -p 9000:9000 --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --mount source=portainer_data,target=/data portainer/portainer
+
+2. After finish portainer will display ip address and password to access (example):
+
+	http://x.x.x.:9000
+
+3. Access via web form and start use
+
+4. CleanUp Lab by command:
+
+	docker container stop portainer
+	docker container rm portainer
+

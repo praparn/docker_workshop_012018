@@ -35,6 +35,10 @@ docker image pull registry:2.6.2
 	curl -X GET http://localhost:5000/v2/_catalog ==> List all images in catalog
 	curl -X GET http://localhost:5000/v2/alpine/tags/list ==> List all tag on alpine image
 
+	*Retrieve Digest When You Forget*
+	curl -v --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -X GET http://localhost:5000/v2/alpine/manifests/latest 2>&1 | grep Docker-Content-Digest | awk '{print ($3)}'
+
+
 6. Test Delete and redownload docker image with command:
 
 	docker image rm localhost:5000/alpine:latest
@@ -45,6 +49,7 @@ docker image pull registry:2.6.2
 7. Delete docker images from registry
 
 	curl -X DELETE http://localhost:5000/v2/alpine/manifests/sha256:65242e8220a341cec40628caaea77eb4acd2fc252329aa853526fde15a4a1d85
+	
 
 8. Clean Up Lab by command:
 
